@@ -124,7 +124,7 @@ In order to configure this badge for your repository instead of the original tem
 
 If you haven't set up automatic unit tests, you should remove this badge from your README file, as the source `.svg` image will not be generated.
 
-For both badges, if you repository is owned by an organization instead of an individual user, use your organization's name instead of `GITHUB_USERNAME`.
+For both badges, if your repository is owned by an organization instead of an individual user, use your organization's name instead of `GITHUB_USERNAME`.
 It is recommended that you move these badges to the top of your README file, right underneath your repository title.
 
 ## 💻 Technical Stuff
