@@ -108,7 +108,7 @@ What is a GitHub Repository without cool [badges](https://shields.io/)?
 
 Once you have [published your repository's listing](#-rebuilding-the-listing) to GitHub Pages, you can use add a badge that displays your current VPM version:
 
-[![VPM Package Version](https://img.shields.io/vpm/v/com.vrchat.demo-template?repository_url=https%3A%2F%2Fdustuu.github.io%2Ftemplate-package%2Findex.json)](https://dustuu.github.io/template-package)
+[![VPM Package Version](https://img.shields.io/vpm/v/com.vrchat.demo-template?repository_url=https%3A%2F%2Fvrchat-community.github.io%2Ftemplate-package%2Findex.json)](https://vrchat-community.github.io/template-package)
 
 In order to configure this badge for your repository instead of the original template repository, you will need to edit the two links within this badge as follows:
 * `https://img.shields.io/vpm/v/<PACKAGE_NAME>?repository_url=https%3A%2F%2F<GITHUB_USERNAME>.github.io%2F<REPOSITORY_NAME>%2Findex.json`
@@ -116,7 +116,7 @@ In order to configure this badge for your repository instead of the original tem
 
 If you have optionally [set up automatic unit tests](#%EF%B8%8F-automating-unit-tests-optional), you can also add a badge that displays your [code coverage results](https://docs.unity3d.com/Packages/com.unity.testtools.codecoverage):
 
-[![Code Coverage](https://dustuu.github.io/template-package/coverage/badge_linecoverage.svg)](https://dustuu.github.io/template-package/coverage)
+[![Code Coverage](https://vrchat-community.github.io/template-package/coverage/badge_linecoverage.svg)](https://vrchat-community.github.io/template-package/coverage)
 
 In order to configure this badge for your repository instead of the original template repository, you will need to edit the two links within this badge as follows:
 * `https://<GITHUB_USERNAME>.github.io/<REPOSITORY_NAME>/coverage/badge_linecoverage.svg`
