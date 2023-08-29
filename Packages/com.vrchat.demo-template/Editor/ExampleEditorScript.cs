@@ -1,10 +1,13 @@
 ﻿using UnityEditor;
+using UnityEngine;
 
-public class ExampleEditorScript
+namespace VRChatPackageTemplate.Editor
 {
-    [MenuItem("Example Editor Script/Test")]
-    static void Test()
+    public class ExampleEditorScript
     {
-        EditorUtility.DisplayDialog("Example Script", "Opened This Dialog", "OK");
+        public const string MESSAGE = "Hello VRChat!";
+
+        [MenuItem("Example Editor Script/Test")]
+        public static void Test() => Debug.Log(MESSAGE);
     }
 }

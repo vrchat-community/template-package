@@ -3,59 +3,182 @@ name: Build Release
 on: 
   workflow_dispatch:
 
-env:
-  packageName: "com.vrchat.demo-template"
-
-permissions:
-  contents: write
-
 jobs:
-  build:
+
+  # Validate Repository Configuration
+  config:
     runs-on: ubuntu-latest
+    outputs:
+      config_package: ${{ steps.config_package.outputs.configPackage }}
+      config_test: ${{ steps.config_test.outputs.configTest }}
     steps:
-    
+
+    # Ensure that required repository variable has been created for the Package
+    - name: Validate Package Config
+      id: config_package
+      run: |
+        if [ "${{ vars.PACKAGE_NAME }}" != "" ]; then
+          echo "configPackage=true" >> $GITHUB_OUTPUT;
+        else
+          echo "configPackage=false" >> $GITHUB_OUTPUT;
+        fi
+
+    # Ensure that required repository variables have been created for the Unit Tests
+    - name: Validate Test Config
+      id: config_test
+      run: |
+        if \
+        [ "${{ vars.ASSEMBLY_NAME }}" != "" ] && \
+        [ "${{ vars.REQUIRED_COVERAGE }}" != "" ] && \
+        [ "${{ vars.UNITY_VERSION }}" != "" ] && \
+        [ "${{ secrets.UNITY_EMAIL }}" != "" ] && \
+        [ "${{ secrets.UNITY_PASSWORD }}" != "" ] && \
+        [ "${{ secrets.UNITY_SERIAL }}" != "" ]; \
+        then
+          echo "configTest=true" >> $GITHUB_OUTPUT;
+        else
+          echo "configTest=false" >> $GITHUB_OUTPUT;
+        fi
+
+  # Optionally run Unit Tests
+  # If Unit Tests are not configured, this job will be skipped
+  test:
+    needs: config
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      checks: write
+    env:
+      coverageArtifactName: coverage
+    outputs:
+      coverage_artifact_name: ${{ env.coverageArtifactName }}
+    if: needs.config.outputs.config_package == 'true' && needs.config.outputs.config_test == 'true'
+    steps:
+      # Checkout Local Repository
       - name: Checkout
-        uses: actions/checkout@v3
-    
-      - name: get version
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744
+      
+      # Create a directory in which Code Coverage results can be stored
+      - name: Make Code Coverage Directory
+        run: mkdir -p CodeCoverage
+
+      # Run the Unit Tests and generate the Code Coverage report
+      - name: Test Runner
+        id: runner
+        uses: game-ci/unity-test-runner@9d0bc623a78ee101f2c8956460d73bba2dfcf0c4
+        env:
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+        with:
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          projectPath: Packages/${{ vars.PACKAGE_NAME }}
+          packageMode: true
+          unityVersion: ${{ vars.UNITY_VERSION }}
+          customParameters: -nographics -assemblyNames "${{ vars.ASSEMBLY_NAME }}.Tests;${{ vars.ASSEMBLY_NAME }}.Editor.Tests"
+          coverageOptions: 'generateBadgeReport;generateHtmlReport;assemblyFilters:+${{ vars.ASSEMBLY_NAME }},+${{ vars.ASSEMBLY_NAME }}.Editor'
+      
+      # Ensure that the Code Coverage report meets the user's configured requirements
+      - name: Enforce Code Coverage
+        uses: kemocade/Kemocade.Unity.Coverage.Action@ad06420f6fbb107bb3aa37f41fb99c79a3f93ad3
+        with:
+          coverage-file-path: ${{ steps.runner.outputs.coveragePath }}/Report/Summary.xml
+          required-coverage: ${{ vars.REQUIRED_COVERAGE }}
+
+      # Pass the Code Coverage report artifact onto the next job
+      - name: Upload Code Coverage Artifact
+        id: upload-coverage-artifact
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce
+        with:
+          name: ${{ env.coverageArtifactName }}
+          path: ${{ steps.runner.outputs.coveragePath }}/Report/
+
+  # Build and release the Package
+  # If the repository is not configured properly, this job will be skipped
+  build:
+    needs: [config, test]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      packagePath: Packages/${{ vars.PACKAGE_NAME }}
+      codeCoveragePath: CodeCoverage
+      codeCoverageZipFile: coverage.zip
+    # Use always() to ensure this conditional is evaluated, even if the 'test' job is skipped
+    if: always() && needs.config.outputs.config_package == 'true'
+    steps:
+
+      # Checkout Local Repository
+      - name: Checkout
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744
+
+      # Create a directory in which Code Coverage results can be extracted
+      # This needs to be done even if there is no Code Coverage report
+      # Add an empty file so that the coverage.zip file can be released even without content
+      - name: Make Code Coverage Directory
+        run: |
+          mkdir -p "${{ env.codeCoveragePath }}"
+          touch "${{ env.codeCoveragePath }}/CODE_COVERAGE_HERE"
+      
+      # Download Code Coverage results if they exist
+      - name: Download Code Coverage Artifact
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        if: needs.test.outputs.coverage_artifact_name != ''
+        with:
+          name: "${{ needs.test.outputs.coverage_artifact_name }}"
+          path: "${{ env.codeCoveragePath }}"
+      
+      # Zip the Code Coverage results for release
+      # This needs to be done even if there is no Code Coverage report, so that the release will function downstream in the Build Listing workflow
+      - name: Create Code Coverage Zip
+        working-directory: "${{ env.codeCoveragePath }}"
+        run: zip -r "${{ github.workspace }}/${{ env.codeCoverageZipFile }}" .
+
+      # Get the Package version based on the package.json file
+      - name: Get Version
         id: version
         uses: zoexx/github-action-json-file-properties@b9f36ce6ee6fe2680cd3c32b2c62e22eade7e590
         with: 
-            file_path: "Packages/${{env.packageName}}/package.json"
+            file_path: "${{ env.packagePath }}/package.json"
             prop_path: "version"
     
+      # Configure the Environment Variables needed for releasing the Package
       - name: Set Environment Variables
         run: |
-          echo "zipFile=${{ env.packageName }}-${{ steps.version.outputs.value }}".zip >> $GITHUB_ENV
-          echo "unityPackage=${{ env.packageName }}-${{ steps.version.outputs.value }}.unitypackage" >> $GITHUB_ENV
+          echo "zipFile=${{ vars.PACKAGE_NAME }}-${{ steps.version.outputs.value }}".zip >> $GITHUB_ENV
+          echo "unityPackage=${{ vars.PACKAGE_NAME }}-${{ steps.version.outputs.value }}.unitypackage" >> $GITHUB_ENV
           echo "version=${{ steps.version.outputs.value }}" >> $GITHUB_ENV
-        
-      - name: Create Zip
-        uses: thedoctor0/zip-release@09336613be18a8208dfa66bd57efafd9e2685657
-        with:
-          type: "zip"
-          directory: "Packages/${{env.packageName}}/"
-          filename: "../../${{env.zipFile}}" # make the zip file two directories up, since we start two directories in above
-          
-      - run: find "Packages/${{env.packageName}}/" -name \*.meta >> metaList
-          
+
+      # Zip the Package for release
+      - name: Create Package Zip
+        working-directory: "${{ env.packagePath }}"
+        run: zip -r "${{ github.workspace }}/${{ env.zipFile }}" .
+      
+      # Build a list of .meta files for future use
+      - name: Track Package Meta Files
+        run: find "${{ env.packagePath }}/" -name \*.meta >> metaList
+      
+      # Make a UnityPackage version of the Package for release
       - name: Create UnityPackage
         uses: pCYSl5EDgo/create-unitypackage@cfcd3cf0391a5ef1306342794866a9897c32af0b
         with:
           package-path: ${{ env.unityPackage }}
           include-files: metaList
       
+      # Make a release tag of the version from the package.json file 
       - name: Create Tag
         id: tag_version
         uses: rickstaa/action-create-tag@07b918ecbf94359b859f25f7a70553a84e804923
         with:
-          tag: "${{env.version}}"
-        
+          tag: "${{ env.version }}"
+      
+      # Publish the Release to GitHub
       - name: Make Release
         uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
         with:
           files: |
             ${{ env.zipFile }}
             ${{ env.unityPackage }}
-            Packages/${{ env.packageName }}/package.json
-          tag_name: ${{env.version}}
+            ${{ env.packagePath }}/package.json
+            ${{ env.codeCoverageZipFile }}
+          tag_name: ${{ env.version }}
