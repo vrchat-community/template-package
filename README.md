@@ -23,7 +23,7 @@ Full details at [Converting Assets to a VPM Package](https://vcc.docs.vrchat.com
 ## ✏️ Working on Your Package
 
 * Delete the "Packages/com.vrchat.demo-template" directory or reuse it for your own package.
-  * If you reuse the package, don't forget to rename it!
+  * If you reuse the package, don't forget to rename it and add generated meta files to your repository!
 * Update the `.gitignore` file in the "Packages" directory to include your package.
   * For example, change `!com.vrchat.demo-template` to `!com.username.package-name`.
   * `.gitignore` files normally *exclude* the contents of your "Packages" directory. This `.gitignore` in this template show how to *include* the demo package. You can easily change this out for your own package name.
