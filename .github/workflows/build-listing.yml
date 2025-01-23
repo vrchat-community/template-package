@@ -64,15 +64,15 @@ jobs:
 
       # Prepare for GitHub Pages deployment
       - name: Setup Pages
-        uses: actions/configure-pages@f156874f8191504dae5b037505266ed5dda6c382
+        uses: actions/configure-pages@v5
       
       # Upload the VPM Listing Website to GitHub Pages artifacts
       - name: Upload Pages Artifact
-        uses: actions/upload-pages-artifact@a753861a5debcf57bf8b404356158c8e1e33150c
+        uses: actions/upload-pages-artifact@v3
         with:
           path: ${{ env.listPublishDirectory }}
       
       # Deploy the uploaded VPM Listing Website to GitHub Pages
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@9dbe3824824f8a1377b8e298bafde1a50ede43e5
+        uses: actions/deploy-pages@v4
