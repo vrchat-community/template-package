@@ -11,27 +11,29 @@
 <body>
   <div class="col align-items-center content">
     <div id="listingInfo" class="col mb-4 w-100 align-items-center">
-      {{~ if listingInfo.BannerImage; ~}}
+        {% if listingInfo.BannerImage -%}
         <div class="bannerImage" style="background-image: url({{ listingInfo.BannerImageUrl }})"></div>
-      {{~ end; ~}}
-      <h1>
-        {{~ listingInfo.Name ~}}
-      </h1>
-      {{~ if listingInfo.Description; ~}}
+        {% endif -%}
+      <h1>{{ listingInfo.Name }}</h1>
+      {% if listingInfo.Description -%}
         <div class="caption1 mb-2">{{ listingInfo.Description }}</div>
-      {{~ end; ~}}
+      {% endif -%}
       <div class="col align-items-center">
-        {{~ if listingInfo.Author.Email; ~}}
+        {% if listingInfo.Author.Email -%}
         <fluent-tooltip id="publishedByTooltip" anchor="publishedByText">
           {{ listingInfo.Author.Email }}
         </fluent-tooltip>
-        {{~ end; ~}}
+        {% endif -%}
         <div class="caption1 mb-2" id="publishedByText">Published by <a href="{{listingInfo.Author.Url}}" target="_blank">{{ listingInfo.Author.Name }}</a></div>
-        {{~ if listingInfo.InfoLink.Url ~}}
+        {% if listingInfo.InfoLink.Url -%}
           <div class="caption1" id="publishedByText">
-            <a href="{{listingInfo.InfoLink.Url}}" target="_blank">{{ if listingInfo.InfoLink.Text; listingInfo.InfoLink.Text; else; "Lean More"; end; }}</a>
+          {% if listingInfo.InfoLink.Text -%}
+            <a href="{{listingInfo.InfoLink.Url}}" target="_blank">{{ listingInfo.InfoLink.Text }}</a>
+          {% else -%}
+            <a href="{{listingInfo.InfoLink.Url}}" target="_blank">Learn More</a>
+          {% endif -%}
           </div>
-        {{~ end; ~}}
+        {% endif -%}
       </div>
     </div>
     <div class="addToVccBlock mt-4 row align-items-center">
@@ -181,7 +183,7 @@
           <fluent-data-grid-cell cell-type="columnheader" grid-column="3">
           </fluent-data-grid-cell>
         </fluent-data-grid-row>
-        {{~ for package in packages ~}}
+        {% for package in packages -%}
           <fluent-data-grid-row data-package-name="{{ package.DisplayName }}" data-package-id="{{ package.Name }}">
             <fluent-data-grid-cell grid-column="1">
               <div class="col">
@@ -207,14 +209,18 @@
               </fluent-button>
             </fluent-data-grid-cell>
           </fluent-data-grid-row>
-        {{~ end ~}}
+        {% endfor -%}
       </fluent-data-grid>
     </fluent-card>
-    {{~ if listingInfo.InfoLink.Url ~}}
+    {% if listingInfo.InfoLink.Url -%}
       <div class="caption1" id="publishedByText">
-        <a href="{{listingInfo.InfoLink.Url}}" target="_blank">{{ if listingInfo.InfoLink.Text; listingInfo.InfoLink.Text; else; "Lean More"; end; }}</a>
+      {% if listingInfo.InfoLink.Text -%}
+        <a href="{{listingInfo.InfoLink.Url}}" target="_blank">{{ listingInfo.InfoLink.Text }}</a>
+      {% else -%}
+        <a href="{{listingInfo.InfoLink.Url}}" target="_blank">Learn More</a>
+      {% endif -%}
       </div>
-    {{~ end; ~}}
+    {% endif -%}
   </div>
   <script type="module" src="app.js"></script>
 </body>

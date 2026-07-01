@@ -3,30 +3,38 @@ import { baseLayerLuminance, StandardLuminance } from 'https://unpkg.com/@fluent
 const LISTING_URL = "{{ listingInfo.Url }}";
 
 const PACKAGES = {
-{{~ for package in packages ~}}
+{% for package in packages -%}
   "{{ package.Name }}": {
     name: "{{ package.Name }}",
-    displayName: "{{ if package.DisplayName; package.DisplayName; end; }}",
-    description: "{{ if package.Description; package.Description; end; }}",
+    {% if package.DisplayName -%}
+      displayName: "{{ package.DisplayName }}",
+    {% endif -%}
+    {% if package.Description -%}
+      description: "{{ package.Description }}",
+    {% endif -%}
     version: "{{ package.Version }}",
     author: {
-      name: "{{ if package.Author.Name; package.Author.Name; end; }}",
-      url: "{{ if package.Author.Url; package.Author.Url; end; }}",
+      {% if package.Author.Name -%}
+        name: "{{ package.Author.Name }}",
+      {% endif -%}
+      {% if package.Author.Url -%}
+        url: "{{ package.Author.Url }}",
+      {% endif -%}
     },
     dependencies: {
-      {{~ for dependency in package.Dependencies ~}}
+    {% for dependency in package.Dependencies -%}
         "{{ dependency.Name }}": "{{ dependency.Version }}",
-      {{~ end ~}}
+    {% endfor -%}
     },
     keywords: [
-      {{~ for keyword in package.Keywords ~}}
+    {% for keyword in package.Keywords -%}
         "{{ keyword }}",
-      {{~ end ~}}
+    {% endfor -%}
     ],
     license: "{{ package.License }}",
     licensesUrl: "{{ package.LicensesUrl }}",
   },
-{{~ end ~}}
+{% endfor -%}
 };
 
 const setTheme = () => {
